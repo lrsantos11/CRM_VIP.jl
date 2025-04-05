@@ -1,7 +1,12 @@
 name = "CRM_VIP.jl"
 authors = ["Luiz-Rafael Santos", "Di Liu", "Alfredo N. Iusem", "Yunier Bello-Cryz", "Roger Behling"]
-[compat]
-julia = "1.10.5"
-DrWatson = "2.18.0"
+
 [deps]
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+LazySets = "b4f0291d-fe17-52bc-9479-3d1a343d9043"
+ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+
+[compat]
+DrWatson = "2.18.0"
+julia = "1.10.5"
