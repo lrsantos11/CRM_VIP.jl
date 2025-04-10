@@ -1,11 +1,15 @@
-name = "CRM_VIP.jl"
-authors = ["Luiz-Rafael Santos", "Di Liu", "Alfredo N. Iusem", "Yunier Bello-Cryz", "Roger Behling"]
+name = "CRM_VIP"
+authors = ["Luiz-Rafael Santos", "Di Liu", "Alfredo N. Iusem", "Yunier Bello-Cruz", "Roger Behling"]
 
 [deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 LazySets = "b4f0291d-fe17-52bc-9479-3d1a343d9043"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 DrWatson = "2.18.0"

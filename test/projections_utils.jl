@@ -1,26 +1,54 @@
-"""
-    Dykstra(x₀, Projections)
+using LinearAlgebra
+using ProximalOperators
 
-        This function implements the Dykstra algorithm for projecting a point onto the intersection of convex sets.  The Algorithm is in the form of the algorithm in Birgin, E. G., & Raydan, M. (2005). Robust stopping criteria for Dykstra's algorithm. SIAM Journal on Scientific Computing, 26(4), 1405-1414.
+
+"""
+    proj = proj_indicator(indicator,x)
+    Projection using Indicator Function from `ProximalOperators.jl`
+    """
+function proj_indicator(indicator, x)
+    proj, _ = prox(indicator, x)
+    return proj
+end
+
+####################################
+"""
+reflec = reflec_indicator(indicator,x)
+Reflection using Indicator Function from `ProximalOperators.jl`
+"""
+function reflec_indicator(indicator, x)
+    proj = proj_indicator(indicator, x)
+    return 2 * proj - x
+end
+####################################
+
+
+
+
+"""
+    dykstra(x₀, projections)
+
+        This function implements the Dykstra's algorithm for projecting a point onto the intersection of convex sets.  The Algorithm is in the form of the algorithm in Birgin, E. G., & Raydan, M. (2005). Robust stopping criteria for Dykstra's algorithm. SIAM Journal on Scientific Computing, 26(4), 1405-1414.
     
         input: 
             x₀::AbstractVector
-            Projections::Vector{Function}
+            projections::Vector{Function}
         output:
             prohj::AbstractVector
 """
-function Dykstra(x₀::AbstractArray,
-            Projections::Vector{Function};
-            EPSVAL::Float64=1e-8, 
-            itmax::Int=1_000,
-            verbose::Bool=false)
+function dykstra(x₀::AbstractArray,
+            projections::Vector{Function};
+            ε::Float64 = 1e-8, 
+            itmax::Int = 1_000,
+            verbose::Bool = false,
+            output_proj::Bool = false)
     # Initialize variables
     T = eltype(x₀)
     tired = false
     solved = false
     iterate = 0
     error_ck_I = zero(T)
-    num_sets = length(Projections)
+    num_sets = length(projections)
     var_size = length(x₀)
     # Initialize the projection variables
     vtemp = zeros(T, var_size)
@@ -31,7 +59,7 @@ function Dykstra(x₀::AbstractArray,
     while !(tired || solved)
         error_ck_I = zero(T)
         # Robust criteria for stopping according to Birgin and Raydan 2006
-        for (index, proj) in enumerate(Projections)
+        for (index, proj) in enumerate(projections)
             if index == 1
                 copyto!(xDykstra[index],  proj(xproj - yDykstra[index]))
                 # y[index]_{k+1} = y[index]_{k+1} + xDykstra[index] - xproj
@@ -56,13 +84,18 @@ function Dykstra(x₀::AbstractArray,
         iterate += 1
         verbose && @info "Iteration: $iterate, Error: $error_ck_I"
 
-        (error_ck_I ≤ EPSVAL) && (solved = true)
-
-        (iterate ≥ itmax) && (tired = true)
+        (error_ck_I ≤ ε) && (solved = true) 
+ 
+          (iterate ≥ itmax) && (tired = true)
         xproj =  xDykstra[end]
 
     end
-    return xproj, iterate, error_ck_I
+    verbose && @info "Dykstra's Iterates: $iterate, Error: $error_ck_I"
+    if output_proj
+        return xproj
+    else
+        return xproj, iterate, error_ck_I
+    end
 
 end
 

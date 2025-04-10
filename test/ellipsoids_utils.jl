@@ -162,7 +162,7 @@ end
 """
 
 
-function Approxproj_ellipsoid(x::AbstractVector,
+function approx_proj_ellipsoid(x::AbstractVector,
     Ellipsoid::EllipsoidCRM;
     λ::Real=1.0, # relaxation parameter
     ϵ::Real=0.0 # perturbation
@@ -178,12 +178,25 @@ end
     Approximate projection onto ellipsoid given as a dict 
 """
 
-function Approxproj_ellipsoid(x::AbstractVector, Ellipsoid::Dict; kwargs...)
+function approx_proj_ellipsoid(x::AbstractVector, Ellipsoid::Dict; kwargs...)
     @unpack A, b, α = Ellipsoid
     ell = EllipsoidCRM(A, b, α)
-    return Approxproj_ellipsoid(x, ell; kwargs...)
+    return approx_proj_ellipsoid(x, ell; kwargs...)
 end
 
+
+"""
+    Provides list of functions and gradients for each ellipsoid
+"""
+function ellipsoid_functions(Ellipsoids::AbstractVector{EllipsoidCRM})
+    functions = Vector{Function}(undef, length(Ellipsoids))
+    gradients = Vector{Function}(undef, length(Ellipsoids))
+    for index in eachindex(Ellipsoids)
+        functions[index] = x -> eval_EllipsoidCRM(x, Ellipsoids[index])
+        gradients[index] = x -> gradient_EllipsoidCRM(x, Ellipsoids[index])
+    end
+    return functions, gradients
+end
 
 
 
@@ -196,7 +209,7 @@ function ApproxProjectEllipsoids_ProdSpace(X::AbstractVector,
     Ellipsoids::AbstractVector{EllipsoidCRM})
     proj = similar(X)
     for index in eachindex(proj)
-        proj[index] = Approxproj_ellipsoid(X[index], Ellipsoids[index])
+        proj[index] = approx_proj_ellipsoid(X[index], Ellipsoids[index])
     end
     return proj
 end
@@ -208,8 +221,8 @@ Creates a vector of projection functions for each ellipsoid in Ellipsoids.
 """
 
 function create_projections_Ellipsoids!(Ellipsoids::AbstractVector{EllipsoidCRM},
-                                        Projections::Vector{Function}; 
-                                        proj_func::Function = proj_ellipsoid, kwargs...)
+    Projections::Vector{Function}; 
+    proj_func::Function = proj_ellipsoid, kwargs...)
     @assert length(Ellipsoids) == length(Projections)
     for index in eachindex(Ellipsoids)
         Projections[index] = x -> proj_func(x, Ellipsoids[index], kwargs...)

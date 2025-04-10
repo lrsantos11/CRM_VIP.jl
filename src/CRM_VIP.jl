@@ -2,12 +2,13 @@
 module CRM_VIP
 
 using Reexport
-@reexport using LinearAlgebra, SparseArrays, ProximalOperators
+@reexport using LinearAlgebra, SparseArrays, ProximalOperators, Statistics
+const LA = LinearAlgebra
+export carm_vip, LA
 
-include("CRM_utils.jl")
+include("CARM_functions.jl")
 include("VIP_utils.jl")
 
 
-export CRM_VIP, CRM_VIP!, find_circumcenter!, find_circumcenter, ProjectIndicator, ReflectIndicator
 
 end
