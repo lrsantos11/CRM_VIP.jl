@@ -38,7 +38,7 @@ end
 """
 function dykstra(x₀::AbstractArray,
             projections::Vector{Function};
-            ε::Float64 = 1e-8, 
+            ε::Float64 = 1e-10, 
             itmax::Int = 1_000,
             verbose::Bool = false,
             output_proj::Bool = false)
@@ -84,7 +84,7 @@ function dykstra(x₀::AbstractArray,
         iterate += 1
         verbose && @info "Iteration: $iterate, Error: $error_ck_I"
 
-        (error_ck_I ≤ ε) && (solved = true) 
+        (error_ck_I < ε) && (solved = true) 
  
           (iterate ≥ itmax) && (tired = true)
         xproj =  xDykstra[end]
@@ -99,3 +99,12 @@ function dykstra(x₀::AbstractArray,
 
 end
 
+
+# """
+# Example of Dykstra's Algorithm as described in Birgin and Raydan 2006
+# """
+# Ω_1 = IndHalfspace(-ones(2), -10.)
+# Ω_2 = IndBox([3, 0.], [10., 4])
+# Projections = [x -> proj_indicator(Ω_1, x), x -> proj_indicator(Ω_2, x)]
+# x₀ = [-49.,50]
+# dykstra(x₀, Projections; verbose=true)
