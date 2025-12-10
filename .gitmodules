@@ -1,0 +1,3 @@
+[submodule "papers/CRM_VIP_paper"]
+	path = papers/CRM_VIP_paper
+	url = https://git@git.overleaf.com/6650e300e7aeb407cb9e720e
