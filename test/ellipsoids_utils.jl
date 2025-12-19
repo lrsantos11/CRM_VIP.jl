@@ -2,7 +2,8 @@
 ## Basic Functions for Ellipsoids tests and plots
 ##################################################################
 using LinearAlgebra, SparseArrays
-using LazySets: Ellipsoid
+using LazySets
+import LazySets: Ellipsoid
 import Base: in
 
 """

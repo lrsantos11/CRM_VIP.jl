@@ -4,10 +4,11 @@ module CRM_VIP
 using Reexport
 @reexport using LinearAlgebra, SparseArrays, ProximalOperators, Statistics
 const LA = LinearAlgebra
-export carm_vip, LA
+export carm_vip, bellocruz_iusem_2010, bellocruz_iusem_2012
 
-include("CARM_functions.jl")
-include("VIP_utils.jl")
+include("CRM_functions.jl")
+include("BI_VIP.jl")
+include("CRM_VIP_functions.jl")
 
 
 
