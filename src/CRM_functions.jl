@@ -1,69 +1,7 @@
-"""
-    crm_vip(x₀, operator_F, projections; max_iteration=3_000, ε = 1e-6)
+using ThreadsX
 
-Implementation of the  Cirumcentered Reflections Method for solving variational inquality problems, i.e.,  to find ``x^*`` lying in a convex set ``C`` such that:
-```math
-    \\langle F(x^* ), x - x^* \\rangle \\leq 0, \\forall x \\in C
-```
-Usually, the set ``C`` is defined as the intersection of convex sets ``C_i``. 
-
-Reference: Behling, et al (2025). On circumcentered direct methods for monotone variational inequality problem. 
-
-# Arguments
-- `x₀`: Initial point
-- `operator_F`: Function that calculates the continous mapping ``F(x)``
-- `projections`: Vector of functions that define the convex sets ``C_i``
-- `max_iteration`: Maximum number of iterations
-- `ε`: Convergence tolerance
-
-# Returns
-- `xₖ`: Approximate solution
-- `error`: Final error (distance between the last two iterations)
-- `index_iteration`: Number of iterations performed
-"""
-function crm_vip(x₀::AbstractVecOrMat{T},
-    operator_F::Function,
-    projections::Vector{Function},
-    max_iteration::Int=3_000,
-    β::Function=(i) -> 1 / (i^2),
-    ε::Float64=1e-6) where {T}
-    # Initializations
-    xₖ = copy(x₀)
-    index_iteration = 1
-    x_temp = similar(x₀)
-    solved = false
-    tired = false
-    error = zero(T)
-    while !(solved || tired)
-        copyto!(x_temp, xₖ)
-
-        # Parameter calculations
-        βₖ = β(index_iteration)
-        F_xₖ = operator_F(xₖ)
-        ηₖ = max(1, norm(F_xₖ))
-        xₖ .-= (βₖ / ηₖ) * F_xₖ
-
-        # Point update using Subgradients as Approximate Projections
-        xₖ = crm_step!(xₖ, projections)
-
-
-        index_iteration += 1
-
-
-        # Convergence check
-        error = norm(xₖ - x_temp)
-        (error ≤ ε) && (solved = true)
-        # Maximum iteration check
-        (index_iteration ≥ max_iteration) && (tired = true)
-
-
-    end
-
-
-    return xₖ, error, index_iteration
-end
-
-
+####################################
+# CRM Functions
 """ 
     crm_step!(xₖ, projections)
 Performs one step of the Circumcentered Reflections Method on the product space
@@ -96,6 +34,10 @@ function crm_step!(xₖ::AbstractVecOrMat{T},
 
    
 end
+
+
+
+
 
 
 
@@ -189,3 +131,61 @@ function reflect_diagonal_prodspace(X::AbstractArray)
 end
 
 
+
+
+####################################
+# PACA Functions
+"""
+    computevₖ(x₀, func_f, ∂f)
+
+"""
+function computevₖⁱ(x::Vector{T}, func_f, ∂f;
+    ϵ::Real=0.0 # perturbation
+) where {T}
+    fx = func_f(x)
+    ∂fx = ∂f(x)
+    return (max(zero(T), fx + ϵ) / dot(∂fx, ∂fx)) .* ∂fx
+end
+
+"""
+    computevₖ!(vₖ, x, Functions, Subgrads)
+
+"""
+function computevₖ!(vₖ::Vector{Vector{T}}, x::Vector{T}, Functions, Subgrads, m;
+    ϵ::Number=0.0 # perturbation
+) where {T}
+    # numthreads = Threads.nthreads()
+    for i in 1:m
+        @views @inbounds copyto!(vₖ[i], computevₖⁱ(x, Functions[i], Subgrads[i], ϵ=ϵ))
+    end
+end
+
+
+""" 
+    paca_step!(yₖ, xₖ, approx_projections)
+Performs one step of the Circumcentered Reflections Method on the product space using the same ideias of PACA method as in Behling et al. (2024)
+# Arguments
+- `xₖ`: Current point
+- `functions_gi`: Vector of functions that define the convex sets ``C_i``
+- `subgradients_gi`: Vector of subgradient functions that define the convex sets ``C_i``
+# Returns
+- `xₖ`: Updated point
+"""
+
+function paca_step!(yₖ::Vector{T}, xₖ::Vector{T},
+    vₖ::Vector{Vector{T}},
+    wₖ::Vector{T},
+    functions_gi::Vector{Function},
+    subgradients_gi::Vector{Function}) where {T}
+    # Initialize variables
+    m = length(functions_gi)
+    invm = inv(m)
+    ϵₖ = 0.0
+    # Compute vₖ
+    computevₖ!(vₖ, xₖ, functions_gi, subgradients_gi, m, ϵ=ϵₖ)
+    copyto!(wₖ, mean(vₖ))
+    αₖ = (mapreduce(v -> dot(v, v), +, vₖ) * invm) / dot(wₖ, wₖ)
+    wₖ *= αₖ
+    yₖ .-= wₖ
+    return yₖ
+end

@@ -36,14 +36,13 @@ end
         output:
             prohj::AbstractVector
 """
-function dykstra(x₀::AbstractArray,
-            projections::Vector{Function};
+function dykstra(x₀::AbstractVecOrMat{T},
+            projections::AbstractVecOrMat;
             ε::Float64 = 1e-10, 
             itmax::Int = 1_000,
             verbose::Bool = false,
-            output_proj::Bool = false)
+            output_proj::Bool = false) where {T}
     # Initialize variables
-    T = eltype(x₀)
     tired = false
     solved = false
     iterate = 0

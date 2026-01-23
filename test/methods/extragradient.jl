@@ -21,16 +21,17 @@ extragradient_vip(x₀, operator_F, projector_C; max_iteration=3_000, ε = 1e-6)
 function extragradient_vip(x₀::AbstractVecOrMat{T},
                             operator_F::Function,
                             projector_C::Function;
-                            max_iteration::Int=3_000,
-                            ε::Float64 = 1e-6, kwargs...) where {T}
+                            max_iteration::Int=30_000,
+                            γ::T=0.1*one(T),
+                            ε::Float64 = 1e-6, verbose = false, kwargs...) where {T}
     # Initializations
     xₖ = copy(x₀)
     yₖ = similar(x₀)
     solved = false
     tired = false
     error = one(T)
+    error_old = one(T)
     index_iteration = 1
-    γ = 0.1*one(T) # Step size for the Korpelevich method
     status = :Tired
     while !(solved || tired)
         
@@ -40,10 +41,16 @@ function extragradient_vip(x₀::AbstractVecOrMat{T},
         index_iteration += 1
 
         # Convergence check
+        error_old = error
         error = norm(xₖ - yₖ)
         (error ≤ ε) && (solved = true)
+        if abs(error - error_old) ≤ ε || error > error_old
+            γ /= 2
+        end
         # Maximum iteration check
         (index_iteration ≥ max_iteration) && (tired = true)
+        verbose && println("Iteration $index_iteration: error = $error")
+
     end
     solved ? status = :Solved : nothing
     return xₖ, error, index_iteration, status

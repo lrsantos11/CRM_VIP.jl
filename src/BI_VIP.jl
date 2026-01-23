@@ -23,9 +23,9 @@ bellocruz_iusem_2010(x₀, operator_F, approx_projector_C; max_iteration=3_000, 
 function bellocruz_iusem_2010(x₀::AbstractVecOrMat{T},
     operator_F::Function,
     approx_projector_C::Function;
-    max_iteration::Int=3_000,
+    max_iteration::Int=30_000,
     ε::Float64=1e-8, 
-    β::Function=(i) -> 1 / (i^(1.1)),
+    β::Function=(i) -> inv(i^(1.1)), verbose = false,
     kwargs...) where {T}
     # Initializations
     xₖ = copy(x₀)
@@ -34,17 +34,17 @@ function bellocruz_iusem_2010(x₀::AbstractVecOrMat{T},
     solved = false
     tired = false
     error = one(T)
-    index_iteration = 1
+    index_iteration = 0
     status = :Tired
     while !(solved || tired)
         copyto!(xₖ_old, xₖ)
         #βₖ is square summable but not  summable, i.e., satisfies Eq. (6-7)
-        βₖ = β(index_iteration)
+        βₖ = β(index_iteration+1)
         copyto!(F_xₖ, operator_F(xₖ))
         ηₖ = max(1.0, norm(F_xₖ))
         γₖ = βₖ / ηₖ
         # Projection Step (Eq. 24)
-        copyto!(xₖ, approx_projector_C(xₖ - γₖ * F_xₖ, xₖ; kwargs...))
+        copyto!(xₖ, approx_projector_C(xₖ - γₖ * F_xₖ, xₖ))
         index_iteration += 1
 
         # Convergence check
@@ -55,6 +55,8 @@ function bellocruz_iusem_2010(x₀::AbstractVecOrMat{T},
         end
         # Maximum iteration check
         (index_iteration ≥ max_iteration) && (tired = true)
+        verbose && println("Iteration $index_iteration: error = $error")
+
     end
     return xₖ, error, index_iteration, status
 end
@@ -86,8 +88,9 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
     approx_projector_C::Function,
     function_g::Function,
     θ::Real;
+    β::Function=(i) -> inv(i^(0.9)),
     max_iteration::Int=3_000,
-    ε::Float64=1e-8, kwargs...) where {T}
+    ε::Float64=1e-6, kwargs...) where {T}
 
     # --- Initialization ---
     # Algorithm A: x⁰ := 0, z⁰ ∈ H
@@ -118,7 +121,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
         # --- Step Size Calculation ---
         # βₖ sequence (example: 1/k^1.1)
         # Note: using index_iteration+1 to avoid division by zero if index_iteration starts at 0
-        βₖ = inv((index_iteration + 1)^(1.1))
+        βₖ = β(index_iteration + 1)
 
         # --- Step 1: Compute y_tilde ---
       
@@ -126,7 +129,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
         copyto!(y_tilde, zₖ)
         g_y_tilde = function_g(y_tilde)
 
-        g_y_tilde ≤ zero(t) ? inner_done = true : inner_done = false
+        g_y_tilde ≤ zero(T) ? inner_done = true : inner_done = false
 
         inner_index_iteration = 0
         while !inner_done
@@ -141,7 +144,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
             denom = g_val - g_w
             lhs = (denom > 1e-12) ? (g_val * dist_w) / denom : Inf
 
-            if lhs ≤ theta * βₖ
+            if lhs ≤ θ * βₖ
                 # Criterion met: Stop inner loop
                 inner_done = true
             else
@@ -199,10 +202,10 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
 
 
         index_iteration += 1
-        if k ≥ max_iteration 
+        if index_iteration ≥ max_iteration 
               tired = true
         end
     end
 
-    return xₖ, zₖ, error, k, status
+    return xₖ, zₖ, error, index_iteration, status
 end
