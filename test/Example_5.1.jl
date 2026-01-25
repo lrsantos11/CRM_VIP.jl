@@ -1,6 +1,8 @@
 using LinearAlgebra
 using Random
 using BenchmarkTools
+using Plots
+using BenchmarkProfiles
 """
     operator_F_Ex_5_1(n::Int; T::Type=Float64, seed::Union{Int, Nothing}=nothing)
 
@@ -169,17 +171,44 @@ Random.seed!(42) # For reproducibility
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 
 for n in [10, 20]
-    for num_ellipsoids in [5, 10, 20]
-        for _ in 1:20  # Repeat each configuration 3 times
-        test_example_5_1!(df_results, n, num_ellipsoids, [:extragradient_vip, :bellocruz_iusem_2010, :crm_vip_algorithm1]; T=Float64, max_iteration=100_000)
+    for num_ellipsoids in [5, 10]
+        for _ in 1:2  # Repeat each configuration 5 times
+        test_example_5_1!(df_results, n, num_ellipsoids, [#:extragradient_vip, 
+        :bellocruz_iusem_2010, :crm_vip_algorithm1]; T=Float64, max_iteration=300_000, ε=1e-6)
         end
     end
 end
 
-CSV.write(datadir("sims", "results_example_5_1_small_size.csv", df_results))
+CSV.write(datadir("sims", "results_example_5_1_small_size.csv"), df_results)
 
-df_results
+# ...existing code...
 
+# Construir matrizes para performance profile
+methods = unique(df_results.Method)
+n_problems = nrow(df_results) ÷ length(methods)  # Assumindo igual número de problemas por método
+
+# Inicializar matrizes com tamanho correto
+Time = Matrix{Float64}(undef, n_problems, length(methods))
+Iterations = Matrix{Int}(undef, n_problems, length(methods))
+
+# Preencher as matrizes
+for (j, method) in enumerate(methods)
+    method_data = filter(row -> row.Method == method, df_results)
+    Time[:, j] = method_data.Time
+    Iterations[:, j] = method_data.Iterations
+end
+
+# Criar performance profiles
+p1 = performance_profile(PlotsBackend(), Time, methods,
+    title="Performance Profile - Time",
+    xlabel="τ", ylabel="Fraction of problems solved")
+
+p2 = performance_profile(PlotsBackend(), Iterations, methods,
+    title="Performance Profile - Iterations",
+    xlabel="τ", ylabel="Fraction of problems solved")
+
+display(p1)
+display(p2)
 ## 5.1.B - Large size problems
 
 Random.seed!(42) # For reproducibility
@@ -187,13 +216,13 @@ Random.seed!(42) # For reproducibility
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 for n in [100, 200, 300]
     for num_ellipsoids in [20, 50, 100]
-        for _ in 1:5  # Repeat each configuration 5 times
-        test_example_5_1!(df_results, n, num_ellipsoids, [:bellocruz_iusem_2010, :crm_vip_algorithm1]; T=Float64, max_iteration=200_000)
+        for _ in 1:2  # Repeat each configuration 5 times
+        test_example_5_1!(df_results, n, num_ellipsoids, [:bellocruz_iusem_2010, :crm_vip_algorithm1]; T=Float64, max_iteration=300_000,ε=1e-5)
         end
     end
 end
 
-CSV.write(datadir("sims", "results_example_5_1_large_size.csv", df_results)) 
+CSV.write(datadir("sims", "results_example_5_1_large_size.csv"), df_results) 
 
 
 ##
@@ -202,4 +231,4 @@ CSV.write(datadir("sims", "results_example_5_1_large_size.csv", df_results))
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 ##
 Random.seed!(42) # For reproducibility
-test_example_5_1!(df_results, 200, 20, [:bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)
+test_example_5_1!(df_results, 100, 20, [:bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)

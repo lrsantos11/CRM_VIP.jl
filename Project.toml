@@ -2,12 +2,14 @@ name = "CRM_VIP"
 authors = ["Luiz-Rafael Santos", "Di Liu", "Alfredo N. Iusem", "Yunier Bello-Cruz", "Roger Behling"]
 
 [deps]
+BenchmarkProfiles = "ecbce9bc-3e5e-569d-9e29-55181f61f8d0"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 LazySets = "b4f0291d-fe17-52bc-9479-3d1a343d9043"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 ProximalOperators = "a725b495-10eb-56fe-b38b-717eba820537"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
