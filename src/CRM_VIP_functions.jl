@@ -26,7 +26,7 @@ function crm_vip_algorithm1(x₀::AbstractVecOrMat{T},
     functions_gi::Vector{Function},
     subgradients_gi::Vector{Function};
     max_iteration::Int=3_000,
-    # β::Function=(i) -> inv(i^(.8)),
+    β::Function=(i) -> inv(i^(0.9)),
     ε::Float64=1e-8, kwargs...) where {T}
     m = length(functions_gi)
     vₖ = [similar(x₀) for _ in 1:m]
@@ -43,6 +43,7 @@ function crm_vip_algorithm1(x₀::AbstractVecOrMat{T},
         operator_F,
         circumcenter_operator;
         max_iteration=max_iteration,
+        β = β,
         ε=ε,
         kwargs...)
 

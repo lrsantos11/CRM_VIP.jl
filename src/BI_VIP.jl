@@ -25,7 +25,7 @@ function bellocruz_iusem_2010(x₀::AbstractVecOrMat{T},
     approx_projector_C::Function;
     max_iteration::Int=30_000,
     ε::Float64=1e-8, 
-    β::Function=(i) -> inv(i^(2)), verbose = false,
+    β::Function=(i) -> inv(i^(0.9)), verbose = false,
     kwargs...) where {T}
     # Initializations
     xₖ = copy(x₀)
@@ -88,7 +88,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
     approx_projector_C::Function,
     function_g::Function,
     θ::Real;
-    β::Function=(i) -> inv(i^(2)),
+    β::Function=(i) -> inv(i^(0.9)),
     max_iteration::Int=3_000,
     ε::Float64=1e-6, kwargs...) where {T}
 
@@ -119,7 +119,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
 
     while !(solved || tired)
         # --- Step Size Calculation ---
-        # βₖ sequence (example: 1/k^2)
+        # βₖ sequence (example: 1/k^0.9)
         # Note: using index_iteration+1 to avoid division by zero if index_iteration starts at 0
         βₖ = β(index_iteration + 1)
 
@@ -157,7 +157,7 @@ function bellocruz_iusem_2012(x₀::AbstractVecOrMat{T},
                 inner_index_iteration += 1
                 # Safety break
                 if inner_index_iteration > max_iteration
-                        @warn("Warning: Inner loop max iterations reached at k=$k")
+                    @warn("Warning: Inner loop max iterations reached at k=$inner_index_iteration")
                         inner_done = true
                 end
             end

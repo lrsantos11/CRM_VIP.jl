@@ -170,26 +170,27 @@ Random.seed!(42) # For reproducibility
 
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 
-for n in [10, 20]
-    for num_ellipsoids in [5, 10]
+for n in [5, 10, 20]
+    for num_ellipsoids in [2, 5, 8]
         for _ in 1:2  # Repeat each configuration 5 times
-        test_example_5_1!(df_results, n, num_ellipsoids, [#:extragradient_vip, 
-        :bellocruz_iusem_2010, :crm_vip_algorithm1]; T=Float64, max_iteration=300_000, ε=1e-6)
+        test_example_5_1!(df_results, n, num_ellipsoids, [:extragradient_vip, 
+                    :bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=300_000, ε=1e-5)
         end
     end
 end
 
 CSV.write(datadir("sims", "results_example_5_1_small_size.csv"), df_results)
 
-# ...existing code...
-
+#Removing extragradient method for performance profile
+# filter!(row -> row.Method != "Extragradient", df_results)
 # Construir matrizes para performance profile
 methods = unique(df_results.Method)
-n_problems = nrow(df_results) ÷ length(methods)  # Assumindo igual número de problemas por método
+number_of_methods = length(methods)
+n_problems = nrow(df_results) ÷ number_of_methods  # Assumindo igual número de problemas por método
 
 # Inicializar matrizes com tamanho correto
-Time = Matrix{Float64}(undef, n_problems, length(methods))
-Iterations = Matrix{Int}(undef, n_problems, length(methods))
+Time = Matrix{Float64}(undef, n_problems, number_of_methods)
+Iterations = Matrix{Int}(undef, n_problems, number_of_methods)
 
 # Preencher as matrizes
 for (j, method) in enumerate(methods)
@@ -231,4 +232,5 @@ CSV.write(datadir("sims", "results_example_5_1_large_size.csv"), df_results)
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 ##
 Random.seed!(42) # For reproducibility
-test_example_5_1!(df_results, 200, 20, [:bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)
+test_example_5_1!(df_results, 500, 20, [#:bellocruz_iusem_2010,
+ :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)
