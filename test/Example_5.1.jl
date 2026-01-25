@@ -231,4 +231,4 @@ CSV.write(datadir("sims", "results_example_5_1_large_size.csv"), df_results)
 df_results = DataFrame(Method=String[], Dimension=Int[], Num_Ellipsoids=Int[], Iterations=Int[], Final_Error=Float64[], Time=Float64[], Status=Symbol[])
 ##
 Random.seed!(42) # For reproducibility
-test_example_5_1!(df_results, 100, 20, [:bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)
+test_example_5_1!(df_results, 200, 20, [:bellocruz_iusem_2010, :crm_vip_algorithm1, :bellocruz_iusem_2012, :crm_vip_algorithm2]; T=Float64, max_iteration=100_000, compute_time=true)
