@@ -2,6 +2,8 @@ using ThreadsX
 using Statistics: mean
 using Base.Threads: nthreads
 
+const PARALLEL_THRESHOLD = 8  # Número mínimo de funções para computação paralela
+
 ####################################
 # CRM Functions
 

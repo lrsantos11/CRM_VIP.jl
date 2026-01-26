@@ -2,7 +2,7 @@
     Example 5.1 -  Test Suite for VIP Methods
     
     This file organizes the numerical experiments comparing:
-    - Methods with APPROXIMATE projections: Alg1 (CRM-VIP), Alg2 (ECM), BI1, BI2
+    - Methods with APPROXIMATE projections: Alg1 (CRM-VIP), Alg2 (CRM-VIP), BI1, BI2
     - Methods with EXACT projections: Extragradient, Malitsky
     
     Test Scenarios:
@@ -88,6 +88,8 @@ const METHOD_INFO = Dict(
     :crm_vip_algorithm1 => (name="CRM-VIP Alg1", category=:approx_projection, requires_slater=false),
     :bellocruz_iusem_2012 => (name="Bello-Cruz Iusem 2012 (BI2)", category=:approx_projection, requires_slater=true),
     :crm_vip_algorithm2 => (name="CRM-VIP Alg2", category=:approx_projection, requires_slater=true),
+    :solodov_svaiter_vip => (name="Solodov-Svaiter", category=:exact_projection, requires_slater=false),
+    :solodov_svaiter_vip_v2 => (name="Solodov-Svaiter v2", category=:exact_projection, requires_slater=false),
 )
 
 #=============================================================================
@@ -217,8 +219,8 @@ function run_method(method::Symbol, x₀, operator_F,
     
     elseif method == :malitsky_2015
         # Fixed step size version - requires L estimate
-        result = projected_reflected_gradient(x₀, operator_F, projector_C;
-                              max_iteration=max_iteration, ε=ε,
+        result = malitsky_2015_adaptive(x₀, operator_F, projector_C;
+                              malitsky_2015_adaptive=max_iteration, ε=ε,
                               L=L_estimate, verbose=verbose)
         return result  # Returns 4 values
         
@@ -250,7 +252,14 @@ function run_method(method::Symbol, x₀, operator_F,
             x₀, Slater_point, operator_F, fi, ∇fi, θ;
             max_iteration=max_iteration, ε=ε)
         return x_sol, error, iterations, status
-        
+
+    elseif method == :solodov_svaiter_vip
+        return solodov_svaiter_vip(x₀, operator_F, projector_C;
+            max_iteration=max_iteration, ε=ε, verbose=verbose)
+
+        elseif method == :solodov_svaiter_vip_v2
+        return solodov_svaiter_vip_v2(x₀, operator_F, projector_C;
+            max_iteration=max_iteration, ε=ε, verbose=verbose)
     else
         error("Method $method not implemented")
     end
@@ -298,6 +307,15 @@ function benchmark_method(method::Symbol, x₀, operator_F,
         return @belapsed crm_vip_algorithm2($x₀, $Slater_point, $operator_F,
                                            $fi, $∇fi, $θ;
                                            max_iteration=$max_iteration, ε=$ε)
+    
+    elseif method == :solodov_svaiter_vip
+        return @belapsed solodov_svaiter_vip($x₀, $operator_F, $projector_C;
+            max_iteration=$max_iteration, ε=$ε, verbose=false)
+
+    elseif method == :solodov_svaiter_vip_v2
+        return @belapsed solodov_svaiter_vip_v2($x₀, $operator_F, $projector_C;
+            max_iteration=$max_iteration, ε=$ε, verbose=false)
+    
     else
         return NaN
     end
@@ -402,6 +420,8 @@ function run_scenario_5_1A(;
         :extragradient_vip,
         :malitsky_2015,           # Fixed step size
         :malitsky_2015_adaptive,  # Adaptive step size
+        :solodov_svaiter_vip,      # ← adicionar
+        :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
         :bellocruz_iusem_2012,  
@@ -467,6 +487,8 @@ function run_scenario_5_1B(;
         :extragradient_vip,
         :malitsky_2015,           # Fixed step size
         :malitsky_2015_adaptive,  # Adaptive step size
+        :solodov_svaiter_vip,      # ← adicionar
+        :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
     ]
@@ -569,9 +591,9 @@ end
 ## Uncomment to run scenarios
 
 # ## 5.1A - Small Size
-df_5_1A = run_scenario_5_1A(num_repetitions=2, compute_time=true)
-CSV.write(datadir("sims", "results_5_1A.csv"), df_5_1A)
-p_time_A, p_iter_A = generate_performance_profiles(df_5_1A; title_suffix=" (5.1A)")
+# df_5_1A = run_scenario_5_1A(num_repetitions=2, compute_time=true)
+# CSV.write(datadir("sims", "results_5_1A.csv"), df_5_1A)
+# p_time_A, p_iter_A = generate_performance_profiles(df_5_1A; title_suffix=" (5.1A)")
 
 # ## 5.1B - Medium Size  
 # df_5_1B = run_scenario_5_1B(num_repetitions=2, compute_time=true)
@@ -609,6 +631,8 @@ function quick_test(; n::Int=10, m::Int=3)
         :extragradient_vip,
         :malitsky_2015,
         :malitsky_2015_adaptive,
+        :solodov_svaiter_vip,      # ← adicionar
+        :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
         :bellocruz_iusem_2012,
