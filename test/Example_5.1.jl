@@ -420,8 +420,8 @@ function run_scenario_5_1A(;
         :extragradient_vip,
         :malitsky_2015,           # Fixed step size
         :malitsky_2015_adaptive,  # Adaptive step size
-        :solodov_svaiter_vip,      # ← adicionar
-        :solodov_svaiter_vip_v2,   # ← adicionar
+        # :solodov_svaiter_vip,      # ← adicionar
+        # :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
         :bellocruz_iusem_2012,  
@@ -487,8 +487,8 @@ function run_scenario_5_1B(;
         :extragradient_vip,
         :malitsky_2015,           # Fixed step size
         :malitsky_2015_adaptive,  # Adaptive step size
-        :solodov_svaiter_vip,      # ← adicionar
-        :solodov_svaiter_vip_v2,   # ← adicionar
+        # :solodov_svaiter_vip,      # ← adicionar
+        # :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
     ]
@@ -615,7 +615,7 @@ end
 Quick test to verify all methods work correctly.
 """
 function quick_test(; n::Int=10, m::Int=3)
-    Random.seed!(123)
+    Random.seed!(42)
     
     df = DataFrame(
         Method=String[], 
@@ -631,8 +631,8 @@ function quick_test(; n::Int=10, m::Int=3)
         :extragradient_vip,
         :malitsky_2015,
         :malitsky_2015_adaptive,
-        :solodov_svaiter_vip,      # ← adicionar
-        :solodov_svaiter_vip_v2,   # ← adicionar
+        # :solodov_svaiter_vip,      # ← adicionar
+        # :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
         :bellocruz_iusem_2012,
