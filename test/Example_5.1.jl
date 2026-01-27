@@ -491,10 +491,12 @@ function run_scenario_5_1B(;
         # :solodov_svaiter_vip_v2,   # ← adicionar
         :bellocruz_iusem_2010,
         :crm_vip_algorithm1,
+        :bellocruz_iusem_2012,  
+        :crm_vip_algorithm2
     ]
     
     dimensions = [50, 100]
-    num_ellipsoids_list = [5, 10]
+    num_ellipsoids_list = [5, 8]
     
     println("\n" * "="^70)
     println("SCENARIO 5.1B: Medium Size Problems")
@@ -593,16 +595,19 @@ end
 # ## 5.1A - Small Size
 # df_5_1A = run_scenario_5_1A(num_repetitions=2, compute_time=true)
 # CSV.write(datadir("sims", "results_5_1A.csv"), df_5_1A)
+# # df_5_1A = CSV.read(datadir("sims", "results_5_1A.csv"), DataFrame)  # Reload to avoid duplication
 # p_time_A, p_iter_A = generate_performance_profiles(df_5_1A; title_suffix=" (5.1A)")
 
-# ## 5.1B - Medium Size  
+# # ## 5.1B - Medium Size  
 # df_5_1B = run_scenario_5_1B(num_repetitions=2, compute_time=true)
 # CSV.write(datadir("sims", "results_5_1B.csv"), df_5_1B)
+# # df_5_1B = CSV.read(datadir("sims", "results_5_1B.csv"), DataFrame)  # Reload to avoid duplication
 # p_time_B, p_iter_B = generate_performance_profiles(df_5_1B; title_suffix=" (5.1B)")
 
 # ## 5.1C - Large Size (approx methods only)
 # df_5_1C = run_scenario_5_1C(num_repetitions=2, compute_time=true)
 # CSV.write(datadir("sims", "results_5_1C.csv"), df_5_1C)
+# # df_5_1C = CSV.read(datadir("sims", "results_5_1C.csv"), DataFrame)  # Reload to avoid duplication
 # p_time_C, p_iter_C = generate_performance_profiles(df_5_1C; title_suffix=" (5.1C)")
 
 #=============================================================================
