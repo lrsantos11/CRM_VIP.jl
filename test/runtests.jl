@@ -12,6 +12,6 @@ include("ellipsoids_utils.jl")
 include("projections_utils.jl")
 include("methods/extragradient.jl")
 include("methods/malitsky_2015.jl")
-include("methods/solodov_svaiter.jl")
 ##
 include("Example_5.1.jl")
+include("Example_5.2.jl")
