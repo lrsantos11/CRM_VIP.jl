@@ -88,8 +88,6 @@ const METHOD_INFO = Dict(
     :crm_vip_algorithm1 => (name="CRM-VIP Alg1", category=:approx_projection, requires_slater=false),
     :bellocruz_iusem_2012 => (name="Bello-Cruz Iusem 2012 (BI2)", category=:approx_projection, requires_slater=true),
     :crm_vip_algorithm2 => (name="CRM-VIP Alg2", category=:approx_projection, requires_slater=true),
-    :solodov_svaiter_vip => (name="Solodov-Svaiter", category=:exact_projection, requires_slater=false),
-    :solodov_svaiter_vip_v2 => (name="Solodov-Svaiter v2", category=:exact_projection, requires_slater=false),
 )
 
 #=============================================================================
@@ -253,13 +251,7 @@ function run_method(method::Symbol, x₀, operator_F,
             max_iteration=max_iteration, ε=ε)
         return x_sol, error, iterations, status
 
-    elseif method == :solodov_svaiter_vip
-        return solodov_svaiter_vip(x₀, operator_F, projector_C;
-            max_iteration=max_iteration, ε=ε, verbose=verbose)
-
-        elseif method == :solodov_svaiter_vip_v2
-        return solodov_svaiter_vip_v2(x₀, operator_F, projector_C;
-            max_iteration=max_iteration, ε=ε, verbose=verbose)
+    
     else
         error("Method $method not implemented")
     end
@@ -307,14 +299,7 @@ function benchmark_method(method::Symbol, x₀, operator_F,
         return @belapsed crm_vip_algorithm2($x₀, $Slater_point, $operator_F,
                                            $fi, $∇fi, $θ;
                                            max_iteration=$max_iteration, ε=$ε)
-    
-    elseif method == :solodov_svaiter_vip
-        return @belapsed solodov_svaiter_vip($x₀, $operator_F, $projector_C;
-            max_iteration=$max_iteration, ε=$ε, verbose=false)
-
-    elseif method == :solodov_svaiter_vip_v2
-        return @belapsed solodov_svaiter_vip_v2($x₀, $operator_F, $projector_C;
-            max_iteration=$max_iteration, ε=$ε, verbose=false)
+   
     
     else
         return NaN
