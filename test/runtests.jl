@@ -15,3 +15,4 @@ include("methods/malitsky_2015.jl")
 ##
 include("Example_5.1.jl")
 include("Example_5.2.jl")
+include("Example_5.3.jl")
