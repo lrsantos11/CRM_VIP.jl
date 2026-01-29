@@ -25,8 +25,6 @@ using Random
 using DataFrames
 using CSV
 
-# Include common utilities
-include("common_test_utils.jl")
 
 #=============================================================================
     OPERATOR DEFINITION FOR EXAMPLE 5.1
