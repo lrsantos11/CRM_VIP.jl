@@ -13,6 +13,7 @@ include("projections_utils.jl")
 include("methods/extragradient.jl")
 include("methods/malitsky_2015.jl")
 ##
+include("common_test_utils.jl")
 include("Example_5.1.jl")
 include("Example_5.2.jl")
 include("Example_5.3.jl")
