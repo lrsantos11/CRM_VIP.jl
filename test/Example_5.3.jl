@@ -352,17 +352,17 @@ end
 # ## 5.3A - Small Size
 df_5_3A = run_scenario_5_3A(num_repetitions=10, compute_time=true)
 CSV.write(datadir("sims", "results_5_3A.csv"), df_5_3A)
-p_time_A, p_iter_A = generate_performance_profiles(df_5_3A; title_suffix=" (5.3A)")
+# p_time_A, p_iter_A = generate_performance_profiles(df_5_3A; title_suffix=" (5.3A)")
 
 ## 5.3B - Medium Size  
 df_5_3B = run_scenario_5_3B(num_repetitions=10, compute_time=true)
 CSV.write(datadir("sims", "results_5_3B.csv"), df_5_3B)
-p_time_B, p_iter_B = generate_performance_profiles(df_5_3B; title_suffix=" (5.3B)")
+# p_time_B, p_iter_B = generate_performance_profiles(df_5_3B; title_suffix=" (5.3B)")
 
 ## 5.3C - Large Size (approx methods only)
 df_5_3C = run_scenario_5_3C(num_repetitions=5, compute_time=true)
 CSV.write(datadir("sims", "results_5_3C.csv"), df_5_3C)
-p_time_C, p_iter_C = generate_performance_profiles(df_5_3C; title_suffix=" (5.3C)")
+# p_time_C, p_iter_C = generate_performance_profiles(df_5_3C; title_suffix=" (5.3C)")
 
 # Run quick test by default when file is executed
 # quick_test_5_3()
