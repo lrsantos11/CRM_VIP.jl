@@ -33,7 +33,6 @@ expensive when m (number of ellipsoids) is large.
 """
 const METHOD_INFO = Dict(
     :extragradient_vip => (name="Extragradient", category=:exact_projection, requires_slater=false),
-    :malitsky_2015 => (name="Malitsky (Fixed λ)", category=:exact_projection, requires_slater=false),
     :malitsky_2015_adaptive => (name="Malitsky (Adaptive)", category=:exact_projection, requires_slater=false),
     :bellocruz_iusem_2010 => (name="Bello-Cruz Iusem 2010 (BI1)", category=:approx_projection, requires_slater=false),
     :crm_vip_algorithm1 => (name="CRM-VIP Alg1", category=:approx_projection, requires_slater=false),
@@ -44,7 +43,6 @@ const METHOD_INFO = Dict(
 # Default method lists for different scenarios
 const METHODS_ALL = [
     :extragradient_vip,
-    :malitsky_2015,
     :malitsky_2015_adaptive,
     :bellocruz_iusem_2010,
     :crm_vip_algorithm1,

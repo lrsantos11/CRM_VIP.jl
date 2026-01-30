@@ -85,13 +85,13 @@ end
     run_scenario_5_1A(; kwargs...)
 
 Scenario 5.1A: Small size problems
-- Dimensions: n ∈ {5, 10, 20}
-- Ellipsoids: m ∈ {2, 5, 8}
+- Dimensions: n ∈ {5, 10}
+- Ellipsoids: m ∈ {2, 5}
 - All methods
 """
 function run_scenario_5_1A(; 
-        num_repetitions::Int=20,
-        max_iteration::Int=40_000,
+        num_repetitions::Int=10,
+        max_iteration::Int=100_000,
         ε::Float64=1e-6,
         compute_time::Bool=true,
         seed::Int=42)
@@ -99,8 +99,8 @@ function run_scenario_5_1A(;
     return run_scenario(operator_F_Ex_5_1;
         scenario_name="SCENARIO 5.1A: Small Size (Gradient Operator)",
         example_name="Example 5.1",
-        dimensions=[5, 10, 20],
-        num_ellipsoids_list=[2, 5, 8],
+        dimensions=[5, 10],
+        num_ellipsoids_list=[2, 5],
         methods_list=METHODS_ALL,
         num_repetitions=num_repetitions,
         max_iteration=max_iteration,
@@ -115,7 +115,7 @@ end
 Scenario 5.1B: Medium size problems  
 - Dimensions: n ∈ {50, 100}
 - Ellipsoids: m ∈ {5, 8}
-- All methods
+- Only approximate projection methods
 """
 function run_scenario_5_1B(; 
         num_repetitions::Int=10,
@@ -129,7 +129,7 @@ function run_scenario_5_1B(;
         example_name="Example 5.1",
         dimensions=[50, 100],
         num_ellipsoids_list=[5, 8],
-        methods_list=METHODS_ALL,
+        methods_list=METHODS_APPROX_ONLY,
         num_repetitions=num_repetitions,
         max_iteration=max_iteration,
         ε=ε,
@@ -197,20 +197,20 @@ end
 ## Uncomment to run scenarios
 
 # ## 5.1A - Small Size
-# df_5_1A = run_scenario_5_1A(num_repetitions=20, compute_time=true)
-# CSV.write(datadir("sims", "results_5_1A.csv"), df_5_1A)
-# p_time_A, p_iter_A = generate_performance_profiles(df_5_1A; title_suffix=" (5.1A)")
+df_5_1A = run_scenario_5_1A(num_repetitions=10, compute_time=true)
+CSV.write(datadir("sims", "results_5_1A.csv"), df_5_1A)
+p_time_A, p_iter_A = generate_performance_profiles(df_5_1A; title_suffix=" (5.1A)")
 
-# ## 5.1B - Medium Size  
-# df_5_1B = run_scenario_5_1B(num_repetitions=10, compute_time=true)
-# CSV.write(datadir("sims", "results_5_1B.csv"), df_5_1B)
-# p_time_B, p_iter_B = generate_performance_profiles(df_5_1B; title_suffix=" (5.1B)")
+## 5.1B - Medium Size  
+df_5_1B = run_scenario_5_1B(num_repetitions=10, compute_time=true)
+CSV.write(datadir("sims", "results_5_1B.csv"), df_5_1B)
+p_time_B, p_iter_B = generate_performance_profiles(df_5_1B; title_suffix=" (5.1B)")
 
-# ## 5.1C - Large Size (approx methods only)
-# df_5_1C = run_scenario_5_1C(num_repetitions=5, compute_time=true)
-# CSV.write(datadir("sims", "results_5_1C.csv"), df_5_1C)
-# p_time_C, p_iter_C = generate_performance_profiles(df_5_1C; title_suffix=" (5.1C)")
+## 5.1C - Large Size (approx methods only)
+df_5_1C = run_scenario_5_1C(num_repetitions=5, compute_time=true)
+CSV.write(datadir("sims", "results_5_1C.csv"), df_5_1C)
+p_time_C, p_iter_C = generate_performance_profiles(df_5_1C; title_suffix=" (5.1C)")
 
 # Run quick test by default when file is executed
-quick_test_5_1()
+# quick_test_5_1()
 
