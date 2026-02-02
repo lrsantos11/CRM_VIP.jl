@@ -87,7 +87,7 @@ function generate_iter_time_table(agg::DataFrame, scenario_label::String, method
     println(io, "\\begin{table}[htbp]")
     println(io, "\\centering")
     println(io, "\\caption{Median iterations and computational time (s) -- $scenario_label}")
-    println(io, "\\label{tab:results_$(replace(scenario_label, " " => "_"))}")
+    println(io, "\\label{tab:results_$(replace(scenario_label, " " => "-"))}")
 
     println(io, "\\resizebox{\\textwidth}{!}{%")
     println(io, "\\begin{tabular}{rr" * repeat("cc", length(methods_present)) * "}")
