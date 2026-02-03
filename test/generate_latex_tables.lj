@@ -2,15 +2,20 @@
 """
     generate_latex_tables.jl
     
-Generate LaTeX tables for Example 5.1 split by scenario complexity
+Generate LaTeX tables for Examples 5.1, 5.2, and 5.3 split by scenario complexity
 
-Generates 4 tables:
+For each example, generates 4 tables:
 - Scenario A: Iterations + Time (all methods) - auto-resized to fit page width
 - Scenario A: Speedup table  
 - Scenarios B+C: Iterations + Time (approximate methods only)
 - Scenarios B+C: Speedup table
 
 Required packages: DrWatson, CSV, DataFrames, Statistics, Printf
+
+Usage:
+    generate_tables_5_1()  # Example 5.1 (gradient operators)
+    generate_tables_5_2()  # Example 5.2 (paramonotone operators)
+    generate_tables_5_3()  # Example 5.3 (monotone operators)
 """
 
 using DrWatson
@@ -59,13 +64,13 @@ const METHOD_ORDER_APPROX = [
 
 function aggregate_results(df::DataFrame)
     df_solved = filter(row -> row.Status in ["Solved", "Solved_xₖ", "Solved_yₖ"], df)
-    
+
     grouped = combine(groupby(df_solved, [:Dimension, :Num_Ellipsoids, :Method]),
         :Iterations => median => :Median_Iter,
         :Time => median => :Median_Time,
         nrow => :N_Solved
     )
-    
+
     return grouped
 end
 
@@ -75,10 +80,10 @@ function format_time(x::Float64)
 end
 
 #=============================================================================
-    TABLE GENERATION
+    TABLE GENERATION - MATCHING PROVIDED FORMAT
 =============================================================================#
 
-function generate_iter_time_table(agg::DataFrame, scenario_label::String, method_order::Vector{String})
+function generate_iter_time_table(agg::DataFrame, example_ref::String, scenario_suffix::String, method_order::Vector{String})
     configs = sort(unique(agg[!, [:Dimension, :Num_Ellipsoids]]), [:Dimension, :Num_Ellipsoids])
     methods_present = filter(m -> m in agg.Method, method_order)
 
@@ -86,40 +91,44 @@ function generate_iter_time_table(agg::DataFrame, scenario_label::String, method
 
     println(io, "\\begin{table}[htbp]")
     println(io, "\\centering")
-    println(io, "\\caption{Median iterations and computational time (s) -- $scenario_label}")
-    println(io, "\\label{tab:results_$(replace(scenario_label, " " => "-"))}")
+    println(io, "\\caption{Median of iterations and wall-clock time (s) -- Example \\ref{$example_ref}.$scenario_suffix}")
+    println(io, "\\label{tab:results_$(example_ref)_$scenario_suffix}")
 
-    println(io, "\\resizebox{\\textwidth}{!}{%")
+    # Use resizebox for Scenario A (many methods), not for B+C
+    if scenario_suffix == "A"
+        println(io, "\\resizebox{\\textwidth}{!}{%")
+    else
+        println(io, "% \\resizebox{\\textwidth}{!}")
+        println(io, "{%")
+    end
+
     println(io, "\\begin{tabular}{rr" * repeat("cc", length(methods_present)) * "}")
     println(io, "\\toprule")
 
-    # Cabeçalho 1: Nomes dos métodos
+    # Header line 1: Method names
     print(io, "\$n\$ & \$m\$")
     for method in methods_present
         print(io, " & \\multicolumn{2}{c}{", METHOD_NAMES[method], "}")
     end
     println(io, " \\\\")
 
-    # Cabeçalho 2: Iter/Time
+    # Header line 2: Iter/Time labels
     print(io, " & ")
     for _ in methods_present
         print(io, " & Iter & Time (s)")
     end
     println(io, " \\\\")
 
-    # --- LÓGICA AUTOMÁTICA DO CMIDRULE ---
-    # Substitui o \midrule por cmidrules separados para cada método
-    # Começa na coluna 3. Cada método ocupa 2 colunas.
+    # cmidrules - one per method
     current_col = 3
     for _ in methods_present
         end_col = current_col + 1
         print(io, "\\cmidrule(lr){$current_col-$end_col} ")
         current_col += 2
     end
-    println(io, "") # Nova linha após os cmidrules
-    # -------------------------------------
+    println(io, "")
 
-    # Dados
+    # Data rows
     for config in eachrow(configs)
         n, m = config.Dimension, config.Num_Ellipsoids
         row_data = filter(r -> r.Dimension == n && r.Num_Ellipsoids == m, agg)
@@ -140,10 +149,9 @@ function generate_iter_time_table(agg::DataFrame, scenario_label::String, method
                 iter = method_data[1, :Median_Iter]
                 time = method_data[1, :Median_Time]
 
-                # Negrito iterações
+                # Bold formatting for best values
                 iter_str = iter == best_iter ? "\\textbf{" * @sprintf("%.0f", iter) * "}" : @sprintf("%.0f", iter)
 
-                # Negrito tempo (com isapprox para precisão)
                 if isapprox(time, best_time; atol=1e-9)
                     time_str = "\\textbf{" * format_time(time) * "}"
                 else
@@ -166,7 +174,7 @@ function generate_iter_time_table(agg::DataFrame, scenario_label::String, method
     return String(take!(io))
 end
 
-function generate_speedup_table(agg::DataFrame, scenario_label::String, method_order::Vector{String})
+function generate_speedup_table(agg::DataFrame, example_ref::String, scenario_suffix::String, method_order::Vector{String})
     configs = sort(unique(agg[!, [:Dimension, :Num_Ellipsoids]]), [:Dimension, :Num_Ellipsoids])
     methods_compare = filter(m -> m != "CRM-VIP Alg1" && m in agg.Method, method_order)
 
@@ -174,14 +182,11 @@ function generate_speedup_table(agg::DataFrame, scenario_label::String, method_o
 
     println(io, "\\begin{table}[htbp]")
     println(io, "\\centering")
-    println(io, "\\caption{Speedup relative to $(METHOD_NAMES["CRM-VIP Alg1"]) -- $scenario_label}")
-    println(io, "\\label{tab:speedup_$(replace(scenario_label, " " => "_"))}")
+    println(io, "\\caption{Speedup relative to $(METHOD_NAMES["CRM-VIP Alg1"]) -- Example \\ref{$example_ref}.$scenario_suffix}")
+    println(io, "\\label{tab:speedup_$(example_ref)_$scenario_suffix}")
 
-    # Speedup tables are usually narrower, but use resizebox if many methods
-    if length(methods_compare) > 4
-        println(io, "\\resizebox{\\textwidth}{!}{%")
-    end
-
+    println(io, "% \\resizebox{\\textwidth}{!}")
+    println(io, "{%")
     println(io, "\\begin{tabular}{rr" * repeat("c", length(methods_compare)) * "}")
     println(io, "\\toprule")
 
@@ -191,11 +196,9 @@ function generate_speedup_table(agg::DataFrame, scenario_label::String, method_o
     end
     println(io, " \\\\")
 
-    # --- ALTERAÇÃO SOLICITADA: APENAS O CMIDRULE ---
-    # Calcula a última coluna: 2 (n e m) + número de métodos
+    # Single cmidrule spanning all method columns
     end_col = 2 + length(methods_compare)
     println(io, "\\cmidrule(lr){3-$end_col}")
-    # -----------------------------------------------
 
     for config in eachrow(configs)
         n, m = config.Dimension, config.Num_Ellipsoids
@@ -221,87 +224,91 @@ function generate_speedup_table(agg::DataFrame, scenario_label::String, method_o
 
     println(io, "\\bottomrule")
     println(io, "\\end{tabular}%")
-
-    if length(methods_compare) > 4
-        println(io, "}% end resizebox")
-    end
-
+    println(io, "}% end resizebox")
     println(io, "\\end{table}")
 
     return String(take!(io))
 end
 
 #=============================================================================
-    MAIN FUNCTION
+    MAIN FUNCTIONS - ONE PER EXAMPLE
 =============================================================================#
 
+"""
+    generate_tables_5_1()
+
+Generate LaTeX tables for Example 5.1 (Gradient Operators).
+Creates tables_5_1A.tex and tables_5_1BC.tex in data/sims/
+"""
 function generate_tables_5_1()
-    
+
     println("\n" * "="^70)
-    println("Generating LaTeX tables for Example 5.1")
+    println("Generating LaTeX tables for Example 5.1 (Gradient Operators)")
     println("="^70)
-    
+
     # SCENARIO A
     println("\n[1/2] Processing Scenario A (all methods)...")
-    
+
     csv_A = datadir("sims", "results_5_1A.csv")
-    !isfile(csv_A) && (@error "File $csv_A not found!"; return)
-    
+    if !isfile(csv_A)
+        @error "File $csv_A not found!"
+        return
+    end
+
     df_A = CSV.read(csv_A, DataFrame)
     println("  Read $(nrow(df_A)) records")
-    
+
     agg_A = aggregate_results(df_A)
     println("  Aggregated $(nrow(agg_A)) groups")
-    
+
     output_A = datadir("sims", "tables_5_1A.tex")
     open(output_A, "w") do io
         write(io, "% LaTeX tables - Example 5.1 Scenario A\n")
         write(io, "% Requires: \\usepackage{siunitx}\n")
         write(io, "% Requires: \\usepackage{graphicx} (for \\resizebox)\n")
         write(io, "% Requires: \\usepackage{booktabs}\n\n")
-        write(io, generate_iter_time_table(agg_A, "Scenario A", METHOD_ORDER_ALL))
-        write(io, "\n\n")
-        write(io, generate_speedup_table(agg_A, "Scenario A", METHOD_ORDER_ALL))
+        write(io, generate_iter_time_table(agg_A, "Example_1", "A", METHOD_ORDER_ALL))
+        write(io, "\n\n\n")
+        write(io, generate_speedup_table(agg_A, "Example_1", "A", METHOD_ORDER_ALL))
     end
     println("  ✓ Saved to $output_A")
-    
+
     # SCENARIOS B+C
     println("\n[2/2] Processing Scenarios B+C (approximate methods only)...")
-    
+
     csv_B = datadir("sims", "results_5_1B.csv")
     csv_C = datadir("sims", "results_5_1C.csv")
-    
+
     all_BC = DataFrame()
     for (label, csv_file) in [("B", csv_B), ("C", csv_C)]
         if isfile(csv_file)
             df = CSV.read(csv_file, DataFrame)
-            df.Scenario = fill("5_1$label", nrow(df))
             append!(all_BC, df)
             println("  Read $(nrow(df)) records from Scenario $label")
         else
             @warn "  File $csv_file not found"
         end
     end
-    
+
     if nrow(all_BC) > 0
         all_BC_approx = filter(r -> r.Method in METHOD_ORDER_APPROX, all_BC)
         println("  Filtered to $(nrow(all_BC_approx)) records")
-        
+
         agg_BC = aggregate_results(all_BC_approx)
         println("  Aggregated $(nrow(agg_BC)) groups")
-        
+
         output_BC = datadir("sims", "tables_5_1BC.tex")
         open(output_BC, "w") do io
             write(io, "% LaTeX tables - Example 5.1 Scenarios B+C\n")
             write(io, "% Requires: \\usepackage{siunitx}\n")
             write(io, "% Requires: \\usepackage{booktabs}\n\n")
-            write(io, generate_iter_time_table(agg_BC, "Scenarios B+C", METHOD_ORDER_APPROX))
-            write(io, "\n\n")
-            write(io, generate_speedup_table(agg_BC, "Scenarios B+C", METHOD_ORDER_APPROX))
+            write(io, generate_iter_time_table(agg_BC, "Example_1", "B \\& C", METHOD_ORDER_APPROX))
+            write(io, "\n\n\n")
+            write(io, generate_speedup_table(agg_BC, "Example_1", "B \\& C", METHOD_ORDER_APPROX))
         end
         println("  ✓ Saved to $output_BC")
     end
-    
+
     println("\n" * "="^70)
     println("Done! Required LaTeX packages:")
     println("  \\usepackage{siunitx}    % for \\num{} scientific notation")
@@ -310,5 +317,197 @@ function generate_tables_5_1()
     println("="^70)
 end
 
-# Auto-execute
- generate_tables_5_1()
+"""
+    generate_tables_5_2()
+
+Generate LaTeX tables for Example 5.2 (Paramonotone Operators).
+Creates tables_5_2A.tex and tables_5_2BC.tex in data/sims/
+"""
+function generate_tables_5_2()
+
+    println("\n" * "="^70)
+    println("Generating LaTeX tables for Example 5.2 (Paramonotone Operators)")
+    println("="^70)
+
+    # SCENARIO A
+    println("\n[1/2] Processing Scenario A (all methods)...")
+
+    csv_A = datadir("sims", "results_5_2A.csv")
+    if !isfile(csv_A)
+        @error "File $csv_A not found!"
+        return
+    end
+
+    df_A = CSV.read(csv_A, DataFrame)
+    println("  Read $(nrow(df_A)) records")
+
+    agg_A = aggregate_results(df_A)
+    println("  Aggregated $(nrow(agg_A)) groups")
+
+    output_A = datadir("sims", "tables_5_2A.tex")
+    open(output_A, "w") do io
+        write(io, "% LaTeX tables - Example 5.2 Scenario A\n")
+        write(io, "% Requires: \\usepackage{siunitx}\n")
+        write(io, "% Requires: \\usepackage{graphicx} (for \\resizebox)\n")
+        write(io, "% Requires: \\usepackage{booktabs}\n\n")
+        write(io, generate_iter_time_table(agg_A, "Example_2", "A", METHOD_ORDER_ALL))
+        write(io, "\n\n\n")
+        write(io, generate_speedup_table(agg_A, "Example_2", "A", METHOD_ORDER_ALL))
+    end
+    println("  ✓ Saved to $output_A")
+
+    # SCENARIOS B+C
+    println("\n[2/2] Processing Scenarios B+C (approximate methods only)...")
+
+    csv_B = datadir("sims", "results_5_2B.csv")
+    csv_C = datadir("sims", "results_5_2C.csv")
+
+    all_BC = DataFrame()
+    for (label, csv_file) in [("B", csv_B), ("C", csv_C)]
+        if isfile(csv_file)
+            df = CSV.read(csv_file, DataFrame)
+            append!(all_BC, df)
+            println("  Read $(nrow(df)) records from Scenario $label")
+        else
+            @warn "  File $csv_file not found"
+        end
+    end
+
+    if nrow(all_BC) > 0
+        all_BC_approx = filter(r -> r.Method in METHOD_ORDER_APPROX, all_BC)
+        println("  Filtered to $(nrow(all_BC_approx)) records")
+
+        agg_BC = aggregate_results(all_BC_approx)
+        println("  Aggregated $(nrow(agg_BC)) groups")
+
+        output_BC = datadir("sims", "tables_5_2BC.tex")
+        open(output_BC, "w") do io
+            write(io, "% LaTeX tables - Example 5.2 Scenarios B+C\n")
+            write(io, "% Requires: \\usepackage{siunitx}\n")
+            write(io, "% Requires: \\usepackage{booktabs}\n\n")
+            write(io, generate_iter_time_table(agg_BC, "Example_2", "B \\& C", METHOD_ORDER_APPROX))
+            write(io, "\n\n\n")
+            write(io, generate_speedup_table(agg_BC, "Example_2", "B \\& C", METHOD_ORDER_APPROX))
+        end
+        println("  ✓ Saved to $output_BC")
+    end
+
+    println("\n" * "="^70)
+    println("Example 5.2 tables generated successfully!")
+    println("="^70)
+end
+
+"""
+    generate_tables_5_3()
+
+Generate LaTeX tables for Example 5.3 (Monotone Operators).
+Creates tables_5_3A.tex and tables_5_3BC.tex in data/sims/
+"""
+function generate_tables_5_3()
+
+    println("\n" * "="^70)
+    println("Generating LaTeX tables for Example 5.3 (Monotone Operators)")
+    println("="^70)
+
+    # SCENARIO A
+    println("\n[1/2] Processing Scenario A (all methods)...")
+
+    csv_A = datadir("sims", "results_5_3A.csv")
+    if !isfile(csv_A)
+        @error "File $csv_A not found!"
+        return
+    end
+
+    df_A = CSV.read(csv_A, DataFrame)
+    println("  Read $(nrow(df_A)) records")
+
+    agg_A = aggregate_results(df_A)
+    println("  Aggregated $(nrow(agg_A)) groups")
+
+    output_A = datadir("sims", "tables_5_3A.tex")
+    open(output_A, "w") do io
+        write(io, "% LaTeX tables - Example 5.3 Scenario A\n")
+        write(io, "% Requires: \\usepackage{siunitx}\n")
+        write(io, "% Requires: \\usepackage{graphicx} (for \\resizebox)\n")
+        write(io, "% Requires: \\usepackage{booktabs}\n\n")
+        write(io, generate_iter_time_table(agg_A, "Example_3", "A", METHOD_ORDER_ALL))
+        write(io, "\n\n\n")
+        write(io, generate_speedup_table(agg_A, "Example_3", "A", METHOD_ORDER_ALL))
+    end
+    println("  ✓ Saved to $output_A")
+
+    # SCENARIOS B+C
+    println("\n[2/2] Processing Scenarios B+C (approximate methods only)...")
+
+    csv_B = datadir("sims", "results_5_3B.csv")
+    csv_C = datadir("sims", "results_5_3C.csv")
+
+    all_BC = DataFrame()
+    for (label, csv_file) in [("B", csv_B), ("C", csv_C)]
+        if isfile(csv_file)
+            df = CSV.read(csv_file, DataFrame)
+            append!(all_BC, df)
+            println("  Read $(nrow(df)) records from Scenario $label")
+        else
+            @warn "  File $csv_file not found"
+        end
+    end
+
+    if nrow(all_BC) > 0
+        all_BC_approx = filter(r -> r.Method in METHOD_ORDER_APPROX, all_BC)
+        println("  Filtered to $(nrow(all_BC_approx)) records")
+
+        agg_BC = aggregate_results(all_BC_approx)
+        println("  Aggregated $(nrow(agg_BC)) groups")
+
+        output_BC = datadir("sims", "tables_5_3BC.tex")
+        open(output_BC, "w") do io
+            write(io, "% LaTeX tables - Example 5.3 Scenarios B+C\n")
+            write(io, "% Requires: \\usepackage{siunitx}\n")
+            write(io, "% Requires: \\usepackage{booktabs}\n\n")
+            write(io, generate_iter_time_table(agg_BC, "Example_3", "B \\& C", METHOD_ORDER_APPROX))
+            write(io, "\n\n\n")
+            write(io, generate_speedup_table(agg_BC, "Example_3", "B \\& C", METHOD_ORDER_APPROX))
+        end
+        println("  ✓ Saved to $output_BC")
+    end
+
+    println("\n" * "="^70)
+    println("Example 5.3 tables generated successfully!")
+    println("="^70)
+end
+
+"""
+    generate_all_tables()
+
+Generate LaTeX tables for all three examples (5.1, 5.2, 5.3).
+"""
+function generate_all_tables()
+    println("\n" * "="^70)
+    println("GENERATING ALL LATEX TABLES")
+    println("="^70)
+
+    generate_tables_5_1()
+    println("\n")
+    generate_tables_5_2()
+    println("\n")
+    generate_tables_5_3()
+
+    println("\n" * "="^70)
+    println("All tables generated successfully!")
+    println("\nOutput files created:")
+    println("  - tables_5_1A.tex, tables_5_1BC.tex")
+    println("  - tables_5_2A.tex, tables_5_2BC.tex")
+    println("  - tables_5_3A.tex, tables_5_3BC.tex")
+    println("="^70)
+end
+
+#=============================================================================
+    MAIN EXECUTION
+=============================================================================#
+
+# Uncomment to run:
+# generate_tables_5_1()
+# generate_tables_5_2()
+# generate_tables_5_3()
+generate_all_tables()
